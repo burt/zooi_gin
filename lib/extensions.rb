@@ -1,7 +1,8 @@
 require 'time'
 require 'date'
+require 'active_support'
 
-class Object
+class Object # :nodoc:
   def to_gin
     "'#'"
   end
@@ -37,19 +38,19 @@ end
 
 class Time  # :nodoc:
   def to_gin
-    "'::todo::'"
+    "'#{self.to_s}'"
   end
 end
 
 class DateTime < Date  # :nodoc:
   def to_gin
-    "'::todo::'"
+    "'#{self.to_s}'"
   end
 end
 
 class Date  # :nodoc:
   def to_gin
-    "'::todo::'"
+    "'#{self.to_s}'"
   end
 end
 
@@ -63,4 +64,14 @@ end
 
 def nil.to_gin # :nodoc:
   "null"
+end
+
+module ActiveSupport
+  
+  class TimeWithZone
+    def to_gin
+      "'#{self.to_s}'"
+    end
+  end
+  
 end

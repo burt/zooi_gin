@@ -5,19 +5,16 @@ module Gin
   class TemplateHandler < ActionView::TemplateHandler
     
     def render(template, locals)
-      puts ":: #{template.inspect}"
-      puts "::: locals"
-      #locals.delete!('object')
-      locals.each_key do |k|
-        puts ":::::: key=#{k}, value=#{locals[k]}"
-      end
-      source = if template.is_a? ActionView::Base
-        template.template.source
+      template = if template.is_a? ActionView::Base
+        template.template
       elsif template.is_a? ActionView::ReloadableTemplate
-        # ["#{template.name.gsub(')}"].each { |i| locals.delete(i) }
-        template.source
+        template
       end
-      Gin::TagHelper.new.javascript_tag "#{format_locals(locals)}#{source}"
+      
+      # remove any unwanted guff
+      locals.delete (template.name[1, template.name.size].to_sym)
+      locals.delete :object
+      @view.javascript_tag "#{format_locals(locals)}#{template.source}"
     end
     
     def compilable?
@@ -29,10 +26,6 @@ module Gin
     end
     
     private
-    
-    def escape(content)
-      Gin::TagHelper.new.escape_javascript content
-    end
     
     def format_locals(locals)
       content = if locals.is_a? Hash
@@ -50,7 +43,7 @@ module Gin
     end
     
     def doc_ready_script(content)
-      "$(function() {\n\t#{content}\n});\n"
+      "$(function() {\n\t#{content}\n});\n\n"
     end
     
   end
