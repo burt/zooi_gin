@@ -24,7 +24,7 @@ class Hash  # :nodoc:
   def to_gin
     contents = ""
     contents = self.to_a.collect do |i|
-      "#{Gin::TemplateHandler.format_key(i[0].to_s)}:#{i[1].to_gin}"
+      "#{Gin::TagHelper.format_key(i[0].to_s)}:#{i[1].to_gin}"
     end
     "{#{contents.sort.join(', ')}}"
   end

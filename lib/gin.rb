@@ -2,48 +2,33 @@ require 'action_controller'
 
 module Gin
   
-  class TemplateHandler < ActionView::TemplateHandler
+  module Renderer
     
-    def render(template, locals)
-      template = if template.is_a? ActionView::Base
-        template.template
-      elsif template.is_a? ActionView::ReloadableTemplate
-        template
-      end
-      
-      # remove any unwanted guff
-      locals.delete (template.name[1, template.name.size].to_sym)
-      locals.delete :object
-      @view.javascript_tag "#{format_locals(locals)}#{template.source}"
-    end
+    include ActionView::Helpers::JavaScriptHelper
+    include ActionView::Helpers::TagHelper
     
-    def compilable?
-      false
-    end
-    
-    def self.format_key(key)
-      key.to_s.camelize(:lower)
+    # :location => :body, :locals => { :salmon => :mousse }, :collection => @posts
+    def javascript_data_tag(options = {})
+      javascript_tag "#{format_content(options)}"
     end
     
     private
     
-    def format_locals(locals)
-      content = if locals.is_a? Hash
-        if locals.has_key?(:collection) && locals[:collection].is_a?(Array)
-          locals[:collection].collect(&:to_gin).join("\n\t")
-        else
-          Gin::Group.new(:body, locals).to_gin
-        end
+    def format_content(options)
+      content = if options.has_key?(:collection) && options[:collection].is_a?(Array)
+        options[:collection].collect(&:to_gin).join("\n\t")
+      elsif options.has_key?(:locals)
+        location = options[:location].nil? ? :body : options[:location]
+        Gin::Group.new("#{location}", options[:locals]).to_gin
       else
-        # todo: raise an error here!
-        '/* badly formed */'
+        '/* raise error here */'
       end
       
       doc_ready_script content
     end
     
     def doc_ready_script(content)
-      "$(function() {\n\t#{content}\n});\n\n"
+      "$(function() {\n\t#{content}\n});\n"
     end
     
   end
@@ -59,7 +44,7 @@ module Gin
     def to_gin
       vals = []
       values.each_pair do |key, value|
-        vals << "$('#{@id}').data('#{TemplateHandler.format_key(key)}', #{value.to_gin});"
+        vals << "$('#{@id}').data('#{TagHelper.format_key(key)}', #{value.to_gin});"
       end
       vals.join("\n\t")
     end
@@ -91,6 +76,33 @@ module Gin
   class TagHelper
     include ActionView::Helpers::JavaScriptHelper
     include ActionView::Helpers::TagHelper
+    
+    def self.format_key(key)
+      key.to_s.camelize(:lower)
+    end
   end
+  
+=begin
+  class TemplateHandler < ActionView::TemplateHandler
+
+    def render(template, locals)
+      template = if template.is_a? ActionView::Base
+        template.template
+      elsif template.is_a? ActionView::ReloadableTemplate
+        template
+      end
+
+      # remove any unwanted guff
+      locals.delete (template.name[1, template.name.size].to_sym)
+      locals.delete :object
+      @view.javascript_tag "#{format_locals(locals)}#{template.source}"
+    end
+
+    def compilable?
+      false
+    end
+
+  end
+=end
   
 end
