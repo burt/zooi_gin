@@ -98,6 +98,19 @@ Then accessed by:
   $('#post_1').data('post_data').title
 
 
+C) Locals helper
+
+Assuming @given_name and @last_name are 'rod' and 'hull', respectfully:
+
+  <%= jquery_locals :first_name => @given_name, :last_name => @surname %>
+  
+Will render:
+
+  var firstName = 'rod';
+  var lastName = 'hull';
+
+This could be particularly useful for ajax in js.erb templates.
+
 Notes:
 
 - Data keys are converted from snake case to camel case
