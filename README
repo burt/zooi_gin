@@ -1,13 +1,107 @@
 Gin
 ===
 
-Introduction goes here.
+JS data helper.
 
 
 Example
 =======
 
-Example goes here.
+A) Basic usage (in erb):
+ 
+  <% content_for :head do %>
+    <% jquery_ready_tag do |s| %>
+      <% s.element(:body) do |e| %>
+        <% e.data(:page_title, 'My awesome page') %>
+        <% e.data(:posts_path, posts_path) %>
+      <% end %>
+    <% end %>
+  <% end %>
+
+Will render to head:
+
+  <script type="text/javascript">
+   //<![CDATA[
+    $(function() {
+      $('body').data('pageTitle', 'My awesome page');
+      $('body').data('postsPath', '/posts');
+    });
+   //]]>
+  </script>
+  
+Data is therefore available to jquery in the usual way:
+
+  // set the html of the element with id 'page_title' to 'My awesome page'
+  $('#page_title').html($('body').data('pageTitle'));
+  
+  // alert the posts path
+  alert($('body').data('postsPath'));
 
 
+B) Swanky usage (in haml):
+  
+  - content_for :head do
+    - jquery_ready_tag do |s|
+      - @posts.each do |p|
+        - s.element "#post_#{p.id}" do |e|
+          - e.data(:id, p.id)
+          - e.data(:title, p.title)
+          - e.data(:published, p.published)
+
+Will render to head (for a few example post models):
+
+  <script type="text/javascript">
+   //<![CDATA[
+    $(function() {
+      $('#post_1').data('id', 1);
+      $('#post_1').data('title', 'My first post');
+      $('#post_1').data('id', true);
+      $('#post_2').data('id', 2);
+      $('#post_2').data('title', 'My second post');
+      $('#post_2').data('id', true);
+    });
+   //]]>
+  </script>
+
+Again, these values are then accessible by jquery in the usual way.
+
+An alternative approach might be to override to_gin in the model:
+
+  class Post
+    # ...
+    def to_gin
+      { :id => id, :title => title, :published => published }
+    end
+  end
+  
+Then in haml:
+
+  - content_for :head do
+    - jquery_ready_tag do |s|
+      - @posts.each do |p|
+        - s.element "#post_#{p.id}" { |e| e.data('post_data', post) }
+        
+Renders:
+  <script type="text/javascript">
+   //<![CDATA[
+    $(function() {
+      $('#post_1').data('post_data', {id:1, title:'My first post', published:true});
+      $('#post_2').data('post_data', {id:2, title:'My second post', published:false});
+    });
+   //]]>
+  </script>
+
+Then accessed by:
+  
+  $('#post_1').data('post_data').title
+
+Notes:
+
+- Data keys are converted from snake case to camel case
+- Values are converted to javascript via the to_gin method on the respective object
+- The element 'attr' setter method is included as well as the 'data'. There may be more to follow.
+
+
+
+  
 Copyright (c) 2009 [name of plugin creator], released under the MIT license
