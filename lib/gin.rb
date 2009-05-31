@@ -1,37 +1,16 @@
 require 'action_controller'
 
 module Gin
-
-  class Builder
-    
-    attr_reader :data
-    
-    def initialize(&block)
-      raise ArgumentError, "Missing block" unless block_given?
-      @data = []
-      yield self
-    end
-    
-    def <<(val)
-      @data << val
-    end
-    
-    def to_s
-      @data.collect(&:to_s).join("\n")
-    end
-    
-    def element(id, key = nil, value = nil)
-      @data << Tags::Element.new(id, key, value)
-    end
-  end
   
   module InstanceMethods
     
     def jquery_ready_script(&block)
-      builder = Builder.new(&block).to_s
-      ready_tag = Gin::Tags::DomReady.new(builder).to_s
-      escaped = ready_tag
-      concat javascript_tag(escaped)
+      Gin::Tags::DomReady.new(self, &block).to_s
+    end
+    
+    def jquery_ready_tag(&block)
+      content = jquery_ready_script(&block)
+      concat javascript_tag(content)
     end
     
   end
@@ -47,10 +26,12 @@ module Gin
     
     class Tag
       
-      attr_reader :content
+      attr_reader :parent, :content
       
-  		def initialize(*args)
+  		def initialize(parent, &block)
+  		  @parent = parent
   		  @content = []
+  		  yield self if block_given?
   		end
 
   		def <<(val)
@@ -61,42 +42,65 @@ module Gin
 
   	class DomReady < Tag
       
-      def initialize(content)
-        @content = content
+      def initialize(parent, &block)
+        super parent, &block
+      end
+      
+      def element(id, &block)
+        self << Element.new(self, id, &block)
       end
       
       def to_s
-        "$(function() {\n\t#{content}\n});\n"
+        formatted = content.collect(&:to_s).join("\n\t")
+        "$(function() {\n\t#{formatted}\n});\n"
       end
       
   	end
 
   	class Element < Tag
       
-      attr_reader :id, :key, :value
+      attr_reader :id
       
-      def initialize(id, key = nil, value = nil)
-        super
-        @id, @key, @value = id, key, value
+      def initialize(parent, id, &block)
+        super parent, &block
+        @id = id
+      end
+      
+      def data(key, value)
+        self << Data.new(self, "data", key, value)
+      end
+      
+      def attr(key, value)
+        self << Data.new(self, "attr", key, value)
       end
       
       def to_s
-        "$('#{@id}').data('#{@key}', #{@value.to_gin});"
+        @content.collect do |c|
+          "$('#{@id}')#{c};"
+        end.join("\n\t")
       end
       
   	end
-
-  	class ElementData < Element
-
-  	end
+  	
+  	class Data < Tag
+  	  
+  	  attr_reader :key, :value
+  	  
+  	  def initialize(parent, data_type, key, value, &block)
+        super parent, &block
+        @data_type, @key, @value = data_type, key, value
+      end
+      
+      def to_s
+        ".#{@data_type}('#{key}', #{value.to_gin})"
+      end
+      
+	  end
     
   end
     
   
 =begin
-  class Formatter
-    
-  end
   
   module Renderer
     
@@ -198,29 +202,6 @@ module Gin
       key.to_s.camelize(:lower)
     end
     
-  end
-=end
-=begin
-  module Record
-
-    include ActionController::RecordIdentifier
-
-    def self.included(base)
-      base.class_eval do 
-        def to_gin
-          permitted_atts = self.class.instance_variable_get "@gin_attributes"
-          atts = {}
-          permitted_atts.each { |a| atts[a] = self.send(a) } unless permitted_atts.nil?
-          Gin::Group.new("##{dom_id(self)}", atts).to_gin
-        end
-      end
-      base.instance_eval do
-        def gin_attributes(*vals)
-          @gin_attributes = vals
-        end
-      end
-    end
-
   end
 =end
 
