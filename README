@@ -72,7 +72,7 @@ An alternative approach might be to override to_gin in the model:
   class Post
     # ...
     def to_gin
-      { :id => id, :title => title, :published => published }
+      { :id => id, :title => title, :published => published }.to_gin
     end
   end
   
@@ -100,7 +100,7 @@ Then accessed by:
 
 C) Locals helper
 
-Assuming @given_name and @last_name are 'rod' and 'hull', respectfully:
+Assuming @given_name and @surname are 'rod' and 'hull', respectfully:
 
   <%= jquery_locals :first_name => @given_name, :last_name => @surname %>
   
