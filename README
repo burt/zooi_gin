@@ -7,8 +7,9 @@ JS data helper.
 Example
 =======
 
-A) Basic usage (in erb):
+A) Basic usage
  
+ <!-- erb -->
   <% content_for :head do %>
     <% jquery_ready_tag do |s| %>
       <% s.element(:body) do |e| %>
@@ -38,8 +39,9 @@ Data is therefore available to jquery in the usual way:
   alert($('body').data('postsPath'));
 
 
-B) Swanky usage (in haml):
+B) Swanky usage:
   
+  =# haml
   - content_for :head do
     - jquery_ready_tag do |s|
       - @posts.each do |p|
@@ -95,12 +97,13 @@ Then accessed by:
   
   $('#post_1').data('post_data').title
 
+
 Notes:
 
 - Data keys are converted from snake case to camel case
 - Values are converted to javascript via the to_gin method on the respective object
 - The element 'attr' setter method is included as well as the 'data'. There may be more to follow.
-
+- The jquery_ready_tag method also accepts the '<<' to append a plain string of js to the script
 
 
   
