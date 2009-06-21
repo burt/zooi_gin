@@ -97,6 +97,17 @@ Then accessed by:
   
   $('#post_1').data('post_data').title
 
+A sensible to_gin override can be generated using the gin_attributes macro:
+
+  class Post
+    gin_attributes :id, :title, :published
+
+Through metaprogramming, this effectively the same as above, i.e.:
+
+  def to_gin
+    { :id => id, :title => title, :published => published }.to_gin
+  end
+    
 
 C) Locals helper
 

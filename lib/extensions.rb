@@ -2,7 +2,16 @@ require 'time'
 require 'date'
 require 'active_support'
 
+# dead_kitten_count += 2
 class Object # :nodoc:
+  
+  def self.gin_attributes(*args)
+    define_method :to_gin do
+      h = args.to_h { |i| self.send i }
+      h.to_gin
+    end
+  end
+  
   def to_gin
     "'#'"
   end
