@@ -122,6 +122,8 @@ Will render:
 
 This could be particularly useful for ajax in js.erb templates.
 
+(todo: change locals so doesn't create global variables!)
+
 Notes:
 
 - Data keys are converted from snake case to camel case
